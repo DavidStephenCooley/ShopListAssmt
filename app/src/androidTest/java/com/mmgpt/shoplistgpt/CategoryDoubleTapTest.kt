@@ -1,8 +1,6 @@
 package com.mmgpt.shoplistgpt
 
-import android.content.Context
 import android.view.View
-import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
@@ -21,6 +19,7 @@ import org.hamcrest.Matchers.allOf
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -32,18 +31,13 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class CategoryDoubleTapTest {
 
-    private lateinit var scenario: ActivityScenario<MainActivity>
-    private var savedState: String? = null
+    @get:Rule
+    val savedState = SavedAppStateRule()
 
-    private val prefs
-        get() = InstrumentationRegistry.getInstrumentation().targetContext
-            .getSharedPreferences("state", Context.MODE_PRIVATE)
+    private lateinit var scenario: ActivityScenario<MainActivity>
 
     @Before
     fun setUp() {
-        // Keep whatever list is on the device so the tests don't destroy it.
-        savedState = prefs.getString("state", null)
-        prefs.edit().clear().commit()
         scenario = ActivityScenario.launch(MainActivity::class.java)
         setCategories(CATEGORY_COUNT)
     }
@@ -51,9 +45,6 @@ class CategoryDoubleTapTest {
     @After
     fun tearDown() {
         scenario.close()
-        prefs.edit().apply {
-            if (savedState == null) clear() else putString("state", savedState)
-        }.commit()
     }
 
     // ---- Plan mode: first page lists categories; category i is page i + 1 ----
@@ -78,7 +69,7 @@ class CategoryDoubleTapTest {
         for (i in 0 until CATEGORY_COUNT) {
             onView(rowPart(R.id.tvName, "Cat $i")).perform(doubleClick())
             assertOnCategoryPage(expectedPage = i + 1, heading = "Cat $i")
-            setPage(0)
+            scenario.setPage(0)
         }
     }
 
@@ -104,7 +95,7 @@ class CategoryDoubleTapTest {
         for (i in 0 until CATEGORY_COUNT) {
             onView(rowPart(R.id.tvName, "Cat $i")).perform(doubleClick())
             assertOnCategoryPage(expectedPage = i, heading = "Cat $i")
-            setPage(CATEGORY_COUNT)
+            scenario.setPage(CATEGORY_COUNT)
         }
     }
 
@@ -124,25 +115,18 @@ class CategoryDoubleTapTest {
     // ---- helpers ----
 
     private fun setCategories(count: Int) {
-        scenario.onActivity { activity ->
-            val vm = ViewModelProvider(
-                activity,
-                ViewModelProvider.AndroidViewModelFactory.getInstance(activity.application)
-            )[ShoppingListViewModel::class.java]
-            vm.setCategories((0 until count).map { i ->
-                ShoppingCategory(
-                    id = 100L + i,
-                    heading = "Cat $i",
-                    items = listOf(ShoppingItem(1000L + i, "Item $i"))
-                )
-            })
-        }
-        InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+        scenario.setCategories((0 until count).map { i ->
+            ShoppingCategory(
+                id = 100L + i,
+                heading = "Cat $i",
+                items = listOf(ShoppingItem(1000L + i, "Item $i"))
+            )
+        })
     }
 
     private fun openPlan() {
         onView(withId(R.id.btnPlan)).perform(click())
-        setPage(0)
+        scenario.setPage(0)
     }
 
     private fun openShopSummary() {
@@ -150,13 +134,6 @@ class CategoryDoubleTapTest {
         scenario.onActivity { activity ->
             val pager = activity.findViewById<ViewPager2>(R.id.viewPager)
             pager.setCurrentItem(pager.adapter!!.itemCount - 1, false)
-        }
-        InstrumentationRegistry.getInstrumentation().waitForIdleSync()
-    }
-
-    private fun setPage(page: Int) {
-        scenario.onActivity { activity ->
-            activity.findViewById<ViewPager2>(R.id.viewPager).setCurrentItem(page, false)
         }
         InstrumentationRegistry.getInstrumentation().waitForIdleSync()
     }
@@ -170,27 +147,9 @@ class CategoryDoubleTapTest {
     )
 
     private fun assertOnCategoryPage(expectedPage: Int, heading: String) {
-        waitForPagerToSettle()
-        var page = -1
-        scenario.onActivity { page = it.findViewById<ViewPager2>(R.id.viewPager).currentItem }
-        assertEquals("ViewPager page after double-tapping $heading", expectedPage, page)
+        scenario.waitForPagerToSettle()
+        assertEquals("ViewPager page after double-tapping $heading", expectedPage, scenario.currentPage())
         onView(allOf(withId(R.id.tvHeading), isDisplayed())).check(matches(withText(heading)))
-    }
-
-    /** Espresso doesn't wait for ViewPager2's smooth scroll, so poll until it stops. */
-    private fun waitForPagerToSettle() {
-        val instrumentation = InstrumentationRegistry.getInstrumentation()
-        val deadline = System.currentTimeMillis() + 5_000
-        while (System.currentTimeMillis() < deadline) {
-            instrumentation.waitForIdleSync()
-            var idle = false
-            scenario.onActivity {
-                idle = it.findViewById<ViewPager2>(R.id.viewPager).scrollState ==
-                    ViewPager2.SCROLL_STATE_IDLE
-            }
-            if (idle) return
-            Thread.sleep(50)
-        }
     }
 
     companion object {

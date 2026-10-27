@@ -9,7 +9,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.mmgpt.shoplistgpt.adapter.ItemAdapter
 import com.mmgpt.shoplistgpt.databinding.FragmentCategoryBinding
@@ -34,34 +33,17 @@ class PlanCategoriesFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
         lateinit var adapter: ItemAdapter
-        val dragHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
-            ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0
-        ) {
-            override fun onMove(
-                recyclerView: RecyclerView,
-                viewHolder: RecyclerView.ViewHolder,
-                target: RecyclerView.ViewHolder
-            ): Boolean {
-                val from = viewHolder.adapterPosition
-                val to = target.adapterPosition
-                val itemFrom = adapter.currentList.getOrNull(from)
-                val itemTo = adapter.currentList.getOrNull(to)
-                if (itemFrom?.isPlaceholder == true || itemTo?.isPlaceholder == true) return false
-                viewModel.reorderCategory(from - 1, to - 1)
-                adapter.moveItem(from, to)
-                return true
-            }
-
-            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {}
-
-            override fun isLongPressDragEnabled(): Boolean = false
+        val dragHelper = ItemTouchHelper(PlanListDragCallback { from, to ->
+            viewModel.reorderCategory(from, to)
         })
 
         adapter = ItemAdapter(
             onAction = { item, action ->
                 val index = adapter.currentList.indexOf(item) - 1
                 when (action) {
-                    ItemAdapter.Action.EDIT -> showEditDialog(index, item.name)
+                    ItemAdapter.Action.EDIT -> showEditDialog(item.name) { name ->
+                        viewModel.editCategory(index, name)
+                    }
                     ItemAdapter.Action.DELETE -> viewModel.deleteCategory(index)
                     else -> {}
                 }
@@ -101,29 +83,10 @@ class PlanCategoriesFragment : Fragment() {
         viewModel.categories.observe(viewLifecycleOwner) { list ->
             binding.tvHeading.text = getString(R.string.categories_heading)
             binding.tvCount.text = ""
-            val items = mutableListOf<ShoppingItem>()
-            items.add(ShoppingItem(-1, "", isPlaceholder = true))
-            list.forEach { cat ->
-                items.add(ShoppingItem(cat.id, cat.heading, isHeading = true))
-            }
-            items.add(ShoppingItem(-2, "", isPlaceholder = true))
-            adapter.submitList(items)
+            adapter.submitList(withAddRows(list.map { cat ->
+                ShoppingItem(cat.id, cat.heading, isHeading = true)
+            }))
         }
-    }
-
-    private fun showEditDialog(index: Int, current: String) {
-        val input = android.widget.EditText(requireContext()).apply { setText(current) }
-        AlertDialog.Builder(requireContext())
-            .setTitle(getString(R.string.edit))
-            .setView(input)
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                val text = input.text.toString().trim()
-                if (text.isNotEmpty()) {
-                    viewModel.editCategory(index, text)
-                }
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
     }
 
     override fun onDestroyView() {
