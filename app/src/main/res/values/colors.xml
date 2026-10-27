@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+<color name="green_500">#4CAF50</color>
+<color name="green_700">#388E3C</color>
+<color name="light_blue_500">#03A9F4</color>
+<color name="black">#000000</color>
+<color name="white">#FFFFFF</color>
+<color name="list_item_text">#000000</color>
+<color name="struck_text">#808080</color>
+<color name="need_buy_bg">#E8F5E9</color>
+<color name="need_buy_border">#A5D6A7</color>
+<color name="have_home_bg">#E3F2FD</color>
+<color name="have_home_border">#81D4FA</color>
+</resources>

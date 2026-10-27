@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Use light text on dark surfaces for readability -->
+    <color name="list_item_text">#FFFFFF</color>
+
+    <!-- Muted gray for struck-through text -->
+    <color name="struck_text">#B0B0B0</color>
+
+    <!-- Dark backgrounds with lighter borders for item cards -->
+    <color name="need_buy_bg">#2E7D32</color>
+    <color name="need_buy_border">#66BB6A</color>
+    <color name="have_home_bg">#1565C0</color>
+    <color name="have_home_border">#64B5F6</color>
+</resources>

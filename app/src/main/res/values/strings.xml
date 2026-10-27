@@ -1,0 +1,21 @@
+<resources>
+<string name="app_name">Shop+Plan</string>
+<string name="import_csv">Import CSV</string>
+<string name="flag">Flag</string>
+<string name="flagged">Flagged</string>
+<string name="open_list">Open List</string>
+<string name="shop">Shop</string>
+<string name="plan">Plan</string>
+<string name="plan_with_date">Plan: %1$s</string>
+<string name="shop_with_date">Shop (Planned %1$s)</string>
+    <string name="import_button">Import</string>
+    <string name="export">Export</string>
+    <string name="reorder">Reorder</string>
+    <string name="add_item">Add...</string>
+    <string name="categories_heading">Categories</string>
+    <string name="summary_heading">Summary</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="clear_all">Clear All</string>
+    <string name="confirm_clear_all">Remove all categories and the items in each category. Proceed?</string>
+</resources>
